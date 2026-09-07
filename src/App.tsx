@@ -1,122 +1,132 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import {
+  useState,
+  useRef,
+  useEffect,
+  type FormEvent,
+} from "react";
+import "./App.css";
+import type { SearchResult } from "./types";
+import SearchBar from "./components/search-bar";
 
-function App() {
-  const [count, setCount] = useState(0)
+
+// ---- Main page -----------------------------------------------------------
+
+export default function SearchPage() {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchResult[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [condensed, setCondensed] = useState(false);
+
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const stickyInputRef = useRef<HTMLInputElement>(null);
+
+  // Toggle the condensed/sticky style once the hero has scrolled out of view.
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setCondensed(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
+
+
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="page">
+      {/* Sticky bar — only interactive/visible once condensed */}
+      <div
+        className={`sticky-bar${condensed ? " sticky-bar--visible" : ""}`}
+        aria-hidden={!condensed}
+      >
+        <div className="sticky-bar__inner">
+          <span className="sticky-bar__mark">Find</span>
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            onSubmit={handleSubmit}
+            loading={loading}
+            condensed
+            inputRef={stickyInputRef}
+          />
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
+      </div>
+
+      <section className="hero">
+        <div className="hero__inner">
+          <h1 className="hero__headline">
+            Find what you're
+            <br />
+            looking for.
+          </h1>
+          <p className="hero__sub">
+            Type a word, a phrase, or a half-formed thought. We'll do the
+            rest.
           </p>
+          <SearchBar
+            value={query}
+            onChange={setQuery}
+            onSubmit={handleSubmit}
+            loading={loading}
+            condensed={false}
+          />
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+        <div className="hero__sentinel" ref={sentinelRef} />
       </section>
 
-      <div className="ticks"></div>
+      <section className="results" ref={resultsRef}>
+        {!hasSearched && (
+          <div className="results__empty">
+            <p>Nothing searched yet — your results will appear here.</p>
+          </div>
+        )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
+        {hasSearched && loading && (
+          <div className="results__loading" role="status">
+            <span className="results__loading-dot" />
+            <span className="results__loading-dot" />
+            <span className="results__loading-dot" />
+          </div>
+        )}
+
+        {hasSearched && !loading && results && results.length === 0 && (
+          <div className="results__empty">
+            <p>
+              No matches for <strong>&ldquo;{query}&rdquo;</strong>. Try a
+              different search.
+            </p>
+          </div>
+        )}
+
+        {hasSearched && !loading && results && results.length > 0 && (
+          <div className="results__list">
+            <p className="results__count">
+              {results.length} result{results.length === 1 ? "" : "s"} for
+              &ldquo;{query}&rdquo;
+            </p>
+            <ul className="results__items">
+              {results.map((r) => (
+                <li key={r.id} className="result-item">
+                  <h2 className="result-item__title">{r.title}</h2>
+                  <p className="result-item__snippet">{r.snippet}</p>
+                  <span className="result-item__source">{r.source}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    </div>
+  );
 }
-
-export default App
