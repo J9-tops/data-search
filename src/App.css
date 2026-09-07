@@ -82,10 +82,10 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* .search-bar:focus-within {
+.search-bar:focus-within {
   border-color: var(--teal);
   box-shadow: 0 1px 2px rgba(27, 27, 31, 0.04), 0 10px 28px rgba(31, 111, 100, 0.12);
-} */
+}
 
 .search-bar__input {
   flex: 1;

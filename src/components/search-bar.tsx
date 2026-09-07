@@ -1,4 +1,4 @@
-import type { FormEvent, KeyboardEvent } from "react";
+import type { FormEvent, KeyboardEvent, RefObject } from "react";
 import { useEffect, useRef } from "react";
 
 interface SearchBarProps {
@@ -7,7 +7,7 @@ interface SearchBarProps {
     onSubmit: (e: FormEvent) => void;
     loading: boolean;
     condensed: boolean;
-    inputRef?: React.RefObject<HTMLTextAreaElement>;
+    inputRef?: RefObject<HTMLTextAreaElement | null>;
 }
 
 export default function SearchBar({

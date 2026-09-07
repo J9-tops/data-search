@@ -26,7 +26,7 @@ export default function SearchPage() {
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
-  const stickyInputRef = useRef<HTMLInputElement>(null);
+  const stickyInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Toggle the condensed/sticky style once the hero has scrolled out of view.
   useEffect(() => {
