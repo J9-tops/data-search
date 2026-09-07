@@ -13,9 +13,9 @@ import SearchBar from "./components/search-bar";
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[] | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
+  const [results] = useState<SearchResult[] | null>(null);
+  const [loading] = useState(false);
+  const [hasSearched] = useState(false);
   const [condensed, setCondensed] = useState(false);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
