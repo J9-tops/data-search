@@ -7,16 +7,22 @@ import {
 import "./App.css";
 import type { SearchResult } from "./types";
 import SearchBar from "./components/search-bar";
+import { searchQuery } from "./services/search";
+import ResultModal from "./components/result-modal";
 
 
 // ---- Main page -----------------------------------------------------------
 
 export default function SearchPage() {
   const [query, setQuery] = useState("");
-  const [results] = useState<SearchResult[] | null>(null);
-  const [loading] = useState(false);
-  const [hasSearched] = useState(false);
+  const [results, setResults] = useState<SearchResult[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState<number | null>(null);
+  const [perPage, setPerPage] = useState<number>(20);
   const [condensed, setCondensed] = useState(false);
+  const [selected, setSelected] = useState<SearchResult | null>(null);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -35,13 +41,74 @@ export default function SearchPage() {
     return () => observer.disconnect();
   }, []);
 
+  // Focus sticky input when condensed becomes true
+  useEffect(() => {
+    if (condensed) {
+      stickyInputRef.current?.focus();
+    }
+  }, [condensed]);
 
+  // Abortable fetch wrapper using the service
+  const fetchResults = (() => {
+    let controller: AbortController | null = null;
+    return async (q: string, p: number) => {
+      controller?.abort();
+      controller = new AbortController();
+      const signal = controller.signal;
+      setLoading(true);
+      try {
+        const data: any = await searchQuery(q, p, signal);
+        // support either an array or { results, total_results / total, per_page }
+        if (Array.isArray(data)) {
+          setResults(data);
+          setTotal(null);
+          setPerPage(data.length || perPage);
+        } else if (data && Array.isArray(data.results)) {
+          setResults(data.results);
+          setTotal(
+            typeof data.total_results === "number"
+              ? data.total_results
+              : typeof data.total === "number"
+              ? data.total
+              : null
+          );
+          setPerPage(typeof data.per_page === "number" ? data.per_page : perPage);
+        } else {
+          setResults([]);
+          setTotal(null);
+        }
+        setHasSearched(true);
+        setTimeout(
+          () => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+          50
+        );
+      } catch (err) {
+        if ((err as any).name !== "AbortError") {
+          console.error(err);
+          setResults([]);
+          setHasSearched(true);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+  })();
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
-
+    setPage(1);
+    void fetchResults(query.trim(), 1);
   };
+
+  // fetch when page changes (but only after an initial search)
+  useEffect(() => {
+    if (!hasSearched) return;
+    // avoid fetching if no query
+    if (!query.trim()) return;
+    void fetchResults(query.trim(), page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   return (
     <div className="page">
@@ -112,18 +179,56 @@ export default function SearchPage() {
         {hasSearched && !loading && results && results.length > 0 && (
           <div className="results__list">
             <p className="results__count">
-              {results.length} result{results.length === 1 ? "" : "s"} for
+              {total !== null ? total : results.length} result{(total ?? results.length) === 1 ? "" : "s"} for
               &ldquo;{query}&rdquo;
             </p>
-            <ul className="results__items">
-              {results.map((r) => (
-                <li key={r.id} className="result-item">
-                  <h2 className="result-item__title">{r.title}</h2>
-                  <p className="result-item__snippet">{r.snippet}</p>
-                  <span className="result-item__source">{r.source}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="results__grid">
+              {results.map((r) => {
+                const photo =
+                  r.photos && r.photos.length
+                    ? (r.photos[0].startsWith("http") ? r.photos[0] : `https://images.hotels.ng/${r.photos[0]}`)
+                    : null;
+                const street = r.location_obj?.street?.[0] ?? r.locations?.[0]?.street ?? "not provided";
+                const price = r.minprice ? `${r.default_currency_code ?? ""} ${r.minprice}` : "not provided";
+
+                return (
+                  <div key={r.id} className="result-card" onClick={() => setSelected(r)} role="button" tabIndex={0}>
+                    <div className="result-card__image">
+                      {photo ? <img src={photo} alt={r.business_name ?? "photo"} /> : <div className="result-card__noimage">No image</div>}
+                    </div>
+                    <div className="result-card__body">
+                      <h3 className="result-card__title">{r.business_name ?? "not provided"}</h3>
+                      <div className="result-card__street">{street}</div>
+                      <div className="result-card__price">{price}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {selected && <ResultModal item={selected} onClose={() => setSelected(null)} />}
+            {/* Pagination controls */}
+            <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 18 }}>
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1 || loading}
+                aria-label="Previous page"
+              >
+                Prev
+              </button>
+              <div style={{ alignSelf: "center" }}>Page {page}</div>
+              <button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={
+                  loading ||
+                  // disable if server returned fewer than perPage items on this page
+                  (results.length < perPage && !(total && page * perPage < total)) ||
+                  (total !== null && page * perPage >= total)
+                }
+                aria-label="Next page"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </section>
