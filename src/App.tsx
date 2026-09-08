@@ -160,10 +160,20 @@ export default function SearchPage() {
         )}
 
         {hasSearched && loading && (
-          <div className="results__loading" role="status">
-            <span className="results__loading-dot" />
-            <span className="results__loading-dot" />
-            <span className="results__loading-dot" />
+          <div className="results__list" role="status">
+            <p className="results__count">Searching...</p>
+            <div className="results__skeleton-grid">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="skeleton-card">
+                  <div className="skeleton-img"></div>
+                  <div className="skeleton-body">
+                    <div className="skeleton-title"></div>
+                    <div className="skeleton-text"></div>
+                    <div className="skeleton-price"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -207,20 +217,19 @@ export default function SearchPage() {
             </div>
             {selected && <ResultModal item={selected} onClose={() => setSelected(null)} />}
             {/* Pagination controls */}
-            <div style={{ display: "flex", justifyContent: "center", gap: 12, marginTop: 18 }}>
+            <div className="pagination">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1 || loading}
                 aria-label="Previous page"
               >
-                Prev
+                Previous
               </button>
-              <div style={{ alignSelf: "center" }}>Page {page}</div>
+              <div className="pagination__info">Page {page}</div>
               <button
                 onClick={() => setPage((p) => p + 1)}
                 disabled={
                   loading ||
-                  // disable if server returned fewer than perPage items on this page
                   (results.length < perPage && !(total && page * perPage < total)) ||
                   (total !== null && page * perPage >= total)
                 }

@@ -5,6 +5,13 @@ interface Props {
   onClose: () => void;
 }
 
+const formatFeatureName = (name: string) => {
+  return name
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+
 export default function ResultModal({ item, onClose }: Props) {
   const desc =
     item.extra_infos?.find((e: any) => e.key === "description")?.value || "not provided";
@@ -21,60 +28,59 @@ export default function ResultModal({ item, onClose }: Props) {
   return (
     <div className="modal-overlay" onClick={onClose} role="dialog" aria-modal="true">
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal__close" onClick={onClose} aria-label="Close">×</button>
-        <h2 className="modal__title">{item.business_name ?? "not provided"}</h2>
-
-        <div className="modal__section">
-          <strong>Description</strong>
-          <div
-            className="modal__description"
-            dangerouslySetInnerHTML={{ __html: desc === "not provided" ? "<p>not provided</p>" : desc }}
-          />
+        <div className="modal__header">
+          <div className="modal__title-group">
+            <h2 className="modal__title">{item.business_name ?? "not provided"}</h2>
+            <p className="modal__subtitle">{street}, {state}</p>
+          </div>
+          <button className="modal__close" onClick={onClose} aria-label="Close">&times;</button>
         </div>
 
-        <div className="modal__section">
-          <strong>Facilities</strong>
-          {facilitiesEntries ? (
-            <div style={{ overflowX: "auto" }}>
-              <table className="modal__facilities-table">
-                <thead>
-                  <tr>
-                    <th>Facility</th>
-                    <th>Available</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {facilitiesEntries.map(([k, v]) => (
-                    <tr key={k}>
-                      <td>{k}</td>
-                      <td>{String(v)}</td>
+        <div className="modal__content">
+          {photos.length > 0 && (
+            <div className="modal__section">
+              <span className="modal__section-title">Gallery</span>
+              <div className="modal__gallery">
+                {photos.map((src, i) => (
+                  <img key={i} src={src} alt={`${item.business_name ?? "photo"} ${i + 1}`} loading="lazy" />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="modal__section">
+            <span className="modal__section-title">Description</span>
+            <div
+              className="modal__description"
+              dangerouslySetInnerHTML={{ __html: desc === "not provided" ? "<p>No description provided.</p>" : desc }}
+            />
+          </div>
+
+          <div className="modal__section">
+            <span className="modal__section-title">Facilities</span>
+            {facilitiesEntries ? (
+              <div className="modal__facilities-wrapper">
+                <table className="modal__facilities-table">
+                  <thead>
+                    <tr>
+                      <th>Facility</th>
+                      <th>Available</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div>not provided</div>
-          )}
-        </div>
-
-        <div className="modal__section">
-          <strong>Location</strong>
-          <div>State: {state}</div>
-          <div>Street: {street}</div>
-        </div>
-
-        <div className="modal__section">
-          <strong>Images</strong>
-          {photos.length ? (
-            <div className="modal__gallery">
-              {photos.map((src, i) => (
-                <img key={i} src={src} alt={`${item.business_name ?? "photo"} ${i + 1}`} />
-              ))}
-            </div>
-          ) : (
-            <div>not provided</div>
-          )}
+                  </thead>
+                  <tbody>
+                    {facilitiesEntries.map(([k, v]) => (
+                      <tr key={k}>
+                        <td>{formatFeatureName(k)}</td>
+                        <td>{v === true || String(v) === "true" ? "Yes" : String(v)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="modal__description"><p>No facilities listed.</p></div>
+            )}
+          </div>
         </div>
       </div>
     </div>
