@@ -1,4 +1,10 @@
 import type { SearchResult } from "../types";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import ImageWithFallback from './image-with-fallback';
 
 interface Props {
   item: SearchResult;
@@ -30,8 +36,8 @@ export default function ResultModal({ item, onClose }: Props) {
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal__header">
           <div className="modal__title-group">
-            <h2 className="modal__title">{item.business_name ?? "not provided"}</h2>
-            <p className="modal__subtitle">{street}, {state}</p>
+            <h2 className="modal__title" title={item.business_name ?? "not provided"}>{item.business_name ?? "not provided"}</h2>
+            <p className="modal__subtitle" title={`${street}, ${state}`}>{street}, {state}</p>
           </div>
           <button className="modal__close" onClick={onClose} aria-label="Close">&times;</button>
         </div>
@@ -41,9 +47,24 @@ export default function ResultModal({ item, onClose }: Props) {
             <div className="modal__section">
               <span className="modal__section-title">Gallery</span>
               <div className="modal__gallery">
-                {photos.map((src, i) => (
-                  <img key={i} src={src} alt={`${item.business_name ?? "photo"} ${i + 1}`} loading="lazy" />
-                ))}
+                <Swiper
+                  modules={[Navigation, Pagination]}
+                  spaceBetween={16}
+                  slidesPerView={1}
+                  breakpoints={{
+                    640: { slidesPerView: 2 },
+                    900: { slidesPerView: 3 },
+                  }}
+                  navigation
+                  pagination={{ clickable: true }}
+                  style={{ width: '100%', paddingBottom: '30px' }}
+                >
+                  {photos.map((src, i) => (
+                    <SwiperSlide key={i}>
+                      <ImageWithFallback src={src} alt={`${item.business_name ?? "photo"} ${i + 1}`} loading="lazy" />
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
               </div>
             </div>
           )}

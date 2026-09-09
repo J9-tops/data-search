@@ -9,6 +9,7 @@ import type { SearchResult } from "./types";
 import SearchBar from "./components/search-bar";
 import { searchQuery } from "./services/search";
 import ResultModal from "./components/result-modal";
+import ImageWithFallback from "./components/image-with-fallback";
 
 
 // ---- Main page -----------------------------------------------------------
@@ -199,16 +200,16 @@ export default function SearchPage() {
                     ? (r.photos[0].startsWith("http") ? r.photos[0] : `https://images.hotels.ng/${r.photos[0]}`)
                     : null;
                 const street = r.location_obj?.street?.[0] ?? r.locations?.[0]?.street ?? "not provided";
-                const price = r.minprice ? `${r.default_currency_code ?? ""} ${r.minprice}` : "not provided";
+                const price = r.minprice ? `${r.default_currency_code ?? ""} ${Number(r.minprice).toLocaleString()}` : "not provided";
 
                 return (
                   <div key={r.id} className="result-card" onClick={() => setSelected(r)} role="button" tabIndex={0}>
                     <div className="result-card__image">
-                      {photo ? <img src={photo} alt={r.business_name ?? "photo"} /> : <div className="result-card__noimage">No image</div>}
+                      {photo ? <ImageWithFallback src={photo} alt={r.business_name ?? "photo"} /> : <div className="result-card__noimage">No image</div>}
                     </div>
                     <div className="result-card__body">
-                      <h3 className="result-card__title">{r.business_name ?? "not provided"}</h3>
-                      <div className="result-card__street">{street}</div>
+                      <h3 className="result-card__title" title={r.business_name ?? "not provided"}>{r.business_name ?? "not provided"}</h3>
+                      <div className="result-card__street" title={street}>{street}</div>
                       <div className="result-card__price">{price}</div>
                     </div>
                   </div>
