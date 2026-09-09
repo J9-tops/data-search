@@ -1,4 +1,5 @@
-import { useState, ImgHTMLAttributes, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { ImgHTMLAttributes } from 'react';
 import { appendImageDimensions } from '../utils/image';
 
 interface Props extends ImgHTMLAttributes<HTMLImageElement> {
