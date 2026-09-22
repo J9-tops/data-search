@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://n13i6zile95zknptu5pcznps.94.130.48.150.sslip.io',
+        target: '',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
